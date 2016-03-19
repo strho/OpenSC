@@ -13,7 +13,7 @@ MAINTAINERCLEANFILES = \
 	$(srcdir)/packaged
 EXTRA_DIST = Makefile.mak
 
-SUBDIRS = etc src win32 doc MacOSX
+SUBDIRS = etc src win32 doc MacOSX tests
 
 dist_noinst_SCRIPTS = bootstrap bootstrap.ci
 dist_noinst_DATA = README \

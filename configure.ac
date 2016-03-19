@@ -791,6 +791,7 @@ AC_CONFIG_FILES([
 	doc/Makefile
 	doc/tools/Makefile
 	etc/Makefile
+	tests/Makefile
 	src/Makefile
 	src/common/Makefile
 	src/libopensc/Makefile
