@@ -22,7 +22,7 @@ static void initialize_token_with_user_pin_test(void **state) {
     rv = function_pointer->C_Login(info->session_handle, CKU_USER, wrong_pin, sizeof(wrong_pin) - 1);
     if (rv != CKR_PIN_INCORRECT) {
         debug_print("C_Login: rv = 0x%.8X\n", rv);
-        fail_msg("Expected CKR_PIN_INCORRECT CKR_PIN_INCORRECT was not returned\n");
+        fail_msg("Expected CKR_PIN_INCORRECT was not returned\n");
     }
 
     debug_print("Test of logging in with created user PIN");
@@ -877,7 +877,7 @@ int main(int argc, char** argv) {
     char command, card_type[25];
     int args_count = 0;
 
-    while ((command = getopt(argc, argv, "m:t:s:")) != -1) {
+    while ((command = getopt(argc, argv, "m:t:s:p:r:")) != -1) {
         switch (command) {
             case 'm':
                 library_path = strdup(optarg);
@@ -901,6 +901,12 @@ int main(int argc, char** argv) {
                 card_info.so_pin = strdup(optarg);
                 card_info.so_pin_length = strlen(optarg);
                 break;
+            case 'p':
+                card_info.pkcs11_tool_path = strdup(optarg);
+                break;
+            case 'r':
+                card_info.pkcs15_tool_path = strdup(optarg);
+                break;
 
             case 'h':
             case '?':
@@ -913,7 +919,25 @@ int main(int argc, char** argv) {
 
     if(args_count < 2) {
         display_usage();
+        free(library_path);
+        clear_card_info();
         return 1;
+    }
+
+    if(card_info.type == PKCS15) {
+        if (!card_info.pkcs11_tool_path || !card_info.pkcs15_tool_path || !card_info.so_pin) {
+            display_usage();
+            free(library_path);
+            clear_card_info();
+            return 1;
+        }
+
+        if(!path_exists(card_info.pkcs11_tool_path) || !path_exists(card_info.pkcs15_tool_path)) {
+            fprintf(stderr, "Given path to 'pkcs11-tool' or 'pkcs15-init' utilities doesn't exists'\n");
+            free(library_path);
+            clear_card_info();
+            return 1;
+        }
     }
 
     if(set_card_info()) {
@@ -932,34 +956,34 @@ int main(int argc, char** argv) {
             cmocka_unit_test_setup_teardown(initialize_token_with_user_pin_test, clear_token_without_login_setup, after_test_cleanup),
             cmocka_unit_test_setup_teardown(change_user_pin_test, clear_token_with_user_login_setup, after_test_cleanup),
 
-//            /* Message digest tests */
-//            cmocka_unit_test_setup_teardown(create_hash_md5_short_message_test, clear_token_with_user_login_setup, after_test_cleanup),
-//            cmocka_unit_test_setup_teardown(create_hash_md5_long_message_test, clear_token_with_user_login_setup, after_test_cleanup),
-//            cmocka_unit_test_setup_teardown(create_hash_sha1_short_message_test, clear_token_with_user_login_setup, after_test_cleanup),
-//            cmocka_unit_test_setup_teardown(create_hash_sha1_long_message_test, clear_token_with_user_login_setup, after_test_cleanup),
-//
-//            /* Key generation tests */
-//            cmocka_unit_test_setup_teardown(generate_rsa_key_pair_no_key_generated_test, clear_token_with_user_login_setup, after_test_cleanup),
-//            cmocka_unit_test_setup_teardown(generate_rsa_key_pair_test, clear_token_with_user_login_setup, after_test_cleanup),
-//
-//            /* Sign and Verify tests */
-//            cmocka_unit_test_setup_teardown(sign_message_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
-//            cmocka_unit_test_setup_teardown(verify_signed_message_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
-//
-//            /* Decryption tests */
-//            cmocka_unit_test_setup_teardown(decrypt_encrypted_message_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
-//
-//            /* Find objects tests */
-//            cmocka_unit_test_setup_teardown(find_all_objects_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
-//            cmocka_unit_test_setup_teardown(find_object_according_to_template_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
-//            cmocka_unit_test_setup_teardown(find_object_and_read_attributes_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
-//
-//            /* Generate random data tests */
-//            cmocka_unit_test_setup_teardown(generate_random_data_test, clear_token_with_user_login_setup, after_test_cleanup),
-//
-//            /* Create and delete objects tests */
-//            cmocka_unit_test_setup_teardown(create_object_test, clear_token_with_user_login_setup, after_test_cleanup),
-//            cmocka_unit_test_setup_teardown(destroy_object_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
+            /* Message digest tests */
+            cmocka_unit_test_setup_teardown(create_hash_md5_short_message_test, clear_token_with_user_login_setup, after_test_cleanup),
+            cmocka_unit_test_setup_teardown(create_hash_md5_long_message_test, clear_token_with_user_login_setup, after_test_cleanup),
+            cmocka_unit_test_setup_teardown(create_hash_sha1_short_message_test, clear_token_with_user_login_setup, after_test_cleanup),
+            cmocka_unit_test_setup_teardown(create_hash_sha1_long_message_test, clear_token_with_user_login_setup, after_test_cleanup),
+
+            /* Key generation tests */
+            cmocka_unit_test_setup_teardown(generate_rsa_key_pair_no_key_generated_test, clear_token_with_user_login_setup, after_test_cleanup),
+            cmocka_unit_test_setup_teardown(generate_rsa_key_pair_test, clear_token_with_user_login_setup, after_test_cleanup),
+
+            /* Sign and Verify tests */
+            cmocka_unit_test_setup_teardown(sign_message_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
+            cmocka_unit_test_setup_teardown(verify_signed_message_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
+
+            /* Decryption tests */
+            cmocka_unit_test_setup_teardown(decrypt_encrypted_message_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
+
+            /* Find objects tests */
+            cmocka_unit_test_setup_teardown(find_all_objects_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
+            cmocka_unit_test_setup_teardown(find_object_according_to_template_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
+            cmocka_unit_test_setup_teardown(find_object_and_read_attributes_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
+
+            /* Generate random data tests */
+            cmocka_unit_test_setup_teardown(generate_random_data_test, clear_token_with_user_login_setup, after_test_cleanup),
+
+            /* Create and delete objects tests */
+            cmocka_unit_test_setup_teardown(create_object_test, clear_token_with_user_login_setup, after_test_cleanup),
+            cmocka_unit_test_setup_teardown(destroy_object_test, clear_token_with_user_login_and_import_keys_setup, after_test_cleanup),
 
     };
 

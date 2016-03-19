@@ -1,9 +1,11 @@
 #! /bin/sh
 
 usage() { 
-	printf "\nUsage:\n\t $0 -m module_path -t [PKCS15, PIV] [-s so_pin]\n"
+	printf "\nUsage:\n\t $0 -m module_path -t [PKCS15, PIV] [-s so_pin] [-p pkcs11_tool_path] [-r pkcs15_init_path]\n"
 	printf "\t -m  module_path:\tpath to tested module (e.g. /usr/lib64/opensc-pkcs11.so)\n"
 	printf "\t -s  so_pin:\t\tSecurity Officer PIN to token\n"
+	printf "\t -p  pkcs11_tool_path:\tPath to pkcs11_tool utility\n"
+	printf "\t -r  pkcs15_init_path:\tPath to pkcs15_init utility\n"
 	printf "\t -t  card_type:\t\tcard type, supported are PKCS15 and PIV\n\n"
 	exit 1; 
 }
@@ -14,10 +16,12 @@ echo "Current directory: $(pwd)"
 MODULE=
 TYPE=
 SO_PIN=""
+PKCS11_TOOL_PATH=""
+PKCS15_INIT_PATH=""
 OPT_ARGS=
 TEST_APP="./pkcs11_tests"
 
-while getopts "m:t:s:" o; do
+while getopts "m:t:s:p:r:" o; do
     case "${o}" in
     m)
         MODULE=${OPTARG}
@@ -35,6 +39,12 @@ while getopts "m:t:s:" o; do
 	    ;;
 	s)
         SO_PIN=${OPTARG}
+	    ;;
+    p)
+        PKCS11_TOOL_PATH=${OPTARG}
+	    ;;
+    r)
+        PKCS15_INIT_PATH=${OPTARG}
 	    ;;
     *)
         usage
@@ -68,22 +78,26 @@ elif test "$TYPE" == "PKCS15"; then
     if test "x$SO_PIN" == "x"; then
         echo "SO PIN has to be specified for PKCS#15 tokens"
         exit 77
-    else
-        OPT_ARGS="-s $SO_PIN"
     fi
 
-    if ! type "pkcs15-init" > /dev/null 2>&1; then
+    if test "x$PKCS15_INIT_PATH" == "x" || ! type ${PKCS15_INIT_PATH} > /dev/null 2>&1; then
         echo "Command line tool 'pkcs15-init' doesn't exists and has to be installed."
         exit 77
     fi
 
-    if ! type "pkcs11-tool" > /dev/null 2>&1; then
+    if test "x$PKCS11_TOOL_PATH" == "x" || ! type ${PKCS11_TOOL_PATH} > /dev/null 2>&1; then
         echo "Command line tool 'pkcs11-tool' doesn't exists and has to be installed."
         exit 77
     fi
+
+    echo "SO_PIN = $SO_PIN"
+    echo "PKCS15_INIT_PATH = $PKCS15_INIT_PATH"
+    echo "PKCS11_TOOL_PATH = $PKCS11_TOOL_PATH"
+
+    OPT_ARGS="-s $SO_PIN -p $PKCS11_TOOL_PATH -r $PKCS15_INIT_PATH"
 fi
 
-if ! test -x $MODULE; then
+if ! test -x ${MODULE}; then
 	echo "Module '$MODULE' doesn't exists"
 	exit 77
 fi
@@ -91,10 +105,10 @@ fi
 echo "Module for testing is: $MODULE"
 echo
 
-if ! test -x $TEST_APP; then
+if ! test -x ${TEST_APP}; then
 	echo "Smartcard test suite has to be build first"
 	echo "Run 'cmake . && make'"
 	exit 77
 fi
 
-$TEST_APP -m $MODULE -t $TYPE $OPT_ARGS
+${TEST_APP} -m ${MODULE} -t ${TYPE} ${OPT_ARGS}

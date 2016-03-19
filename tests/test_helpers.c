@@ -32,8 +32,12 @@ int clear_token() {
     }
 
     if(card_info.type == PKCS15) {
-        error |= system("pkcs15-init -ET > /dev/null 2>&1");
-        error |= system("pkcs15-init -CT --no-so-pin > /dev/null 2>&1");
+        char command[BUFFER_SIZE];
+        snprintf(command, sizeof(command), "%s -ET > /dev/null 2>&1", card_info.pkcs15_tool_path);
+        error |= system(command);
+
+        snprintf(command, sizeof(command), "%s -CT --no-so-pin > /dev/null 2>&1", card_info.pkcs15_tool_path);
+        error |= system(command);
     }
 
     if(error) {
@@ -50,7 +54,7 @@ int import_keys() {
 
     if(card_info.type == PIV) {
         debug_print("Importing private key");
-        error = system("yubico-piv-tool -a import-key -s 9a -i ../resources/private_key.pem > /dev/null 2>&1");
+        error = system("yubico-piv-tool -a import-key -s 9a -i ./resources/private_key.pem > /dev/null 2>&1");
 
         if (error) {
             fprintf(stderr, "Could not import private key!\n");
@@ -59,7 +63,7 @@ int import_keys() {
 
         debug_print("Importing public key and certificate");
 
-        error = system("yubico-piv-tool -a import-certificate -s 9a -K DER -i ../resources/cert.der > /dev/null 2>&1");
+        error = system("yubico-piv-tool -a import-certificate -s 9a -K DER -i ./resources/cert.der > /dev/null 2>&1");
 
         if (error) {
             fprintf(stderr, "Could not import public key!\n");
@@ -68,9 +72,13 @@ int import_keys() {
     }
 
     if(card_info.type == PKCS15) {
+
+        char command[BUFFER_SIZE];
+
         debug_print("Importing private key");
-        error = system(
-                "pkcs11-tool -l --pin 12345 --write-object ../resources/private_key.key --type privkey --id a1 --label \"My Private Key\" --usage-sign --usage-decrypt > /dev/null 2>&1");
+        snprintf(command, sizeof(command), "%s -l --pin %s --write-object %s --type privkey  %s > /dev/null 2>&1",
+                 card_info.pkcs11_tool_path, card_info.pin, PRIVATE_KEY_DER_PATH, PRIVATE_KEY_PROPERTIES);
+        error = system(command);
 
         if (error) {
             fprintf(stderr, "Could not import private key!\n");
@@ -78,8 +86,9 @@ int import_keys() {
         }
 
         debug_print("Importing public key");
-        error = system(
-                "pkcs11-tool -l --pin 12345 --write-object ../resources/public_key.key --type pubkey --id a1 --label \"My Public Key\" --usage-sign --usage-decrypt > /dev/null 2>&1");
+        snprintf(command, sizeof(command), "%s -l --pin %s --write-object %s --type pubkey  %s > /dev/null 2>&1",
+                 card_info.pkcs11_tool_path, card_info.pin, PUBLIC_KEY_DER_PATH, PUBLIC_KEY_PROPERTIES);
+        error = system(command);
 
         if (error) {
             fprintf(stderr, "Could not import public key!\n");
@@ -87,8 +96,9 @@ int import_keys() {
         }
 
         debug_print("Importing certificate");
-        error = system(
-                "pkcs11-tool -l --pin 12345 --write-object ../resources/cert.der --type cert --id a1 > /dev/null 2>&1");
+        snprintf(command, sizeof(command), "%s -l --pin %s --write-object %s --type cert --id a1 > /dev/null 2>&1",
+                 card_info.pkcs11_tool_path, card_info.pin, CERTIFICATE_DER_PATH);
+        error = system(command);
 
         if (error) {
             fprintf(stderr, "Could not import public key!\n");

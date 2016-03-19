@@ -1,6 +1,6 @@
 MAINTAINERCLEANFILES = $(srcdir)/Makefile.in
 
-EXTRA_DIST = test_card.sh yubico_test.sh
+EXTRA_DIST = test_card.sh yubico_test.sh pkcs15_test.sh
 
 CFLAGS = -std=gnu99 -Wdeprecated-declarations
 AM_CFLAGS = $(OPENSSL_CFLAGS)
@@ -22,7 +22,7 @@ pkcs11_tests_SOURCES = \
     test_helpers.c test_helpers.h test_suits.c test_suits.h
 
 
-dist_check_SCRIPTS = yubico_test.sh
+dist_check_SCRIPTS = pkcs15_test.sh
 
 dist_check_DATA = \
 	resources/cert.der resources/cert.pem resources/message_to_decrypt.dec \

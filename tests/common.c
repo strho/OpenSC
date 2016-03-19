@@ -1,12 +1,15 @@
+#include <sys/stat.h>
 #include "common.h"
 
 void display_usage() {
     fprintf(stdout,
             " usage:\n"
-                    "    ./SmartCardTestSuite -m module_path -t [PKCS15, PIV] [-s so_pin]\n"
-                    "       -m  module_path:   path to tested module (e.g. /usr/lib64/opensc-pkcs11.so)\n"
-                    "       -s  so_pin:        Security Officer PIN to token\n"
-                    "       -t  card_type:     card type, supported are PKCS15 and PIV\n"
+                    "./pkcs11_tests -m module_path -t [PKCS15, PIV] [-s so_pin] [-p pkcs11_tool_path] [-r pkcs15_init_path]\n"
+                    "\t-m  module_path:\tpath to tested module (e.g. /usr/lib64/opensc-pkcs11.so)\n"
+                    "\t-s  so_pin:\t\tSecurity Officer PIN to token\n"
+                    "\t-p  pkcs11_tool_path:\tPath to pkcs11_tool utility\n"
+                    "\t-r  pkcs15_init_path:\tPath to pkcs15_init utility\n"
+                    "\t-t  card_type:\t\tcard type, supported are PKCS15 and PIV\n"
                     "\n");
 }
 
@@ -52,4 +55,15 @@ void clear_card_info() {
 
     if(card_info.so_pin)
         free(card_info.so_pin);
+
+    if(card_info.pkcs11_tool_path)
+        free(card_info.pkcs11_tool_path);
+
+    if(card_info.pkcs15_tool_path)
+        free(card_info.pkcs15_tool_path);
+}
+
+inline int path_exists(const char* name) {
+    struct stat buffer;
+    return (stat (name, &buffer) == 0);
 }
