@@ -10,12 +10,11 @@ AM_CPPFLAGS = \
 	-I$(top_builddir)
 
 AM_LDFLAGS = -no-install
-#LDADD = libcmocka
 
 bin_PROGRAMS = pkcs11_tests
 
 check_PROGRAMS = pkcs11_tests
-pkcs11_tests_LDADD = ./libs/libcmocka.so
+pkcs11_tests_LDADD = -lcmocka
 pkcs11_tests_SOURCES = \
     cryptoki.h pkcs11f.h pkcs11.h pkcs11t.h \
     common.c common.h loader.c loader.h \
