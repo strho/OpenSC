@@ -1,10 +1,17 @@
 #! /bin/sh
 
-OPENSC_PATH="$(pwd)/../src/pkcs11/.libs/opensc-pkcs11.so"
-PKCS15_INIT_PATH="$(pwd)/../src/tools/pkcs15-init"
-PKCS11_TOOL_PATH="$(pwd)/../src/tools/pkcs11-tool"
+. ./common_functions.sh
 
+if ! is_card_connected; then
+    exit 77
+fi
 
+ALLOWED_ATRS=("3b:95:18:40:ff:62:04:01:01:05")
+
+if ! is_card_allowed "${ALLOWED_ATRS[@]}"; then
+    echo "Card is not supported"
+    exit 77
+fi;
 
 echo "Current directory: $(pwd)"
 echo "Testing PKCS#11 implementation on PKCS#15 cards"
